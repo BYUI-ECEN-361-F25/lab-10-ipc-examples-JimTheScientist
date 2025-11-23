@@ -97,12 +97,33 @@ osThreadId_t ResetGlobalHandle;
 const osThreadAttr_t ResetGlobal_attributes = {
   .name = "ResetGlobal",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityIdle,
 };
 /* Definitions for DebounceTask */
 osThreadId_t DebounceTaskHandle;
 const osThreadAttr_t DebounceTask_attributes = {
   .name = "DebounceTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for toggleLED4 */
+osThreadId_t toggleLED4Handle;
+const osThreadAttr_t toggleLED4_attributes = {
+  .name = "toggleLED4",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for toggleLED3 */
+osThreadId_t toggleLED3Handle;
+const osThreadAttr_t toggleLED3_attributes = {
+  .name = "toggleLED3",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for updateDisplayPr */
+osThreadId_t updateDisplayPrHandle;
+const osThreadAttr_t updateDisplayPr_attributes = {
+  .name = "updateDisplayPr",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
@@ -165,6 +186,9 @@ void Mutex_CountDownTask(void *argument);
 void UpdateGlobDisplayProcess(void *argument);
 void ResetGlobalTask(void *argument);
 void StartDebounce(void *argument);
+void StartTask09(void *argument);
+void StartTask10(void *argument);
+void updateDisplayTask(void *argument);
 void SW_Timer_Countdown(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -280,6 +304,15 @@ int main(void)
 
   /* creation of DebounceTask */
   DebounceTaskHandle = osThreadNew(StartDebounce, NULL, &DebounceTask_attributes);
+
+  /* creation of toggleLED4 */
+  toggleLED4Handle = osThreadNew(StartTask09, NULL, &toggleLED4_attributes);
+
+  /* creation of toggleLED3 */
+  toggleLED3Handle = osThreadNew(StartTask10, NULL, &toggleLED3_attributes);
+
+  /* creation of updateDisplayPr */
+  updateDisplayPrHandle = osThreadNew(updateDisplayTask, NULL, &updateDisplayPr_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -637,7 +670,7 @@ void SW_Timer_Task(void *argument)
 	if (osTimerIsRunning(SW_Timer_7SegHandle))
 		osTimerStop(SW_Timer_7SegHandle );
 	else
-		osTimerStart(SW_Timer_7SegHandle , 200);
+		osTimerStart(SW_Timer_7SegHandle , 500);
     osDelay(1);
   }
   /* USER CODE END SW_Timer_Task */
@@ -777,6 +810,69 @@ void StartDebounce(void *argument)
 	     if (buttons_in & B3) { osSemaphoreRelease(Button_3_SemaphoreHandle); }
 	 }
   /* USER CODE END StartDebounce */
+}
+
+/* USER CODE BEGIN Header_StartTask09 */
+/**
+* @brief Function implementing the toggleLED4 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask09 */
+void StartTask09(void *argument)
+{
+  /* USER CODE BEGIN StartTask09 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osSemaphoreAcquire(Button_1_SemaphoreHandle, osWaitForever);
+    HAL_GPIO_TogglePin(LED_D4_GPIO_Port, LED_D4_Pin);
+  }
+  /* USER CODE END StartTask09 */
+}
+
+/* USER CODE BEGIN Header_StartTask10 */
+/**
+* @brief Function implementing the toggleLED3 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask10 */
+void StartTask10(void *argument)
+{
+  /* USER CODE BEGIN StartTask10 */
+  /* Infinite loop */
+  for(;;)
+  {
+	osSemaphoreAcquire(Button_1_SemaphoreHandle, osWaitForever);
+	HAL_GPIO_TogglePin(LED_D3_GPIO_Port, LED_D3_Pin);
+  }
+  /* USER CODE END StartTask10 */
+}
+
+/* USER CODE BEGIN Header_updateDisplayTask */
+/**
+* @brief Function implementing the updateDisplayPr thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_updateDisplayTask */
+void updateDisplayTask(void *argument)
+{
+  /* USER CODE BEGIN updateDisplayTask */
+  /* Infinite loop */
+    for(;;)
+        {
+        /* This doesn't change the value, it just clears the display  */
+        /* If asked to display a negative number, the function displays a "--"
+        */
+        osMutexWait(UpDownMutexHandle,osWaitForever);
+        MultiFunctionShield_Display_Two_Digits(-1);
+        osDelay(200);
+        osMutexRelease(UpDownMutexHandle);
+        osDelay(2);
+        }
+  /* USER CODE END updateDisplayTask */
 }
 
 /* SW_Timer_Countdown function */
