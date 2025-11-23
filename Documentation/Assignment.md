@@ -1,5 +1,5 @@
 # ECEN-361 Lab-10: IPC-Examples
-     Student Name:  ___________________________________
+     Student Name:  Aidan Pratt
 
 ## Introduction and Objectives of the Lab
 
